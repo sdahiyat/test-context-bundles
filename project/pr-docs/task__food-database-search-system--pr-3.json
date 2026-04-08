@@ -1,0 +1,52 @@
+{
+  "overview": "This PR implements the core food database and search system for NutriTrack. It adds a seeded foods table, initial DB schema, fuzzy search API, recent/frequent food tracking via SQL functions, and supporting TypeScript types and UI infrastructure. Custom food creation is also supported; external API integration and barcode scanning are explicitly out of scope.",
+  "summary_json": {
+    "New API routes": "GET /api/foods/search, GET /api/foods/recent",
+    "New DB functions": "get_recent_foods(user_id, limit=20), get_frequent_foods(user_id, limit=10)",
+    "Required env vars": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY",
+    "Seed data": "Common foods seeded via supabase/seed/foods_seed.sql with ON CONFLICT DO NOTHING",
+    "Search behavior": "ilike fuzzy match on name and brand; max 50 results; include_custom param supported",
+    "Auth pattern": "Recent/frequent endpoints require Bearer token in Authorization header",
+    "Out of scope": "External food API integration, barcode scanning"
+  },
+  "files_changed": [
+    {
+      "path": "supabase/seed/foods_seed.sql",
+      "summary": "Seeds the foods table with common foods (proteins, etc.) including macros and serving sizes, idempotent via ON CONFLICT DO NOTHING."
+    },
+    {
+      "path": "supabase/migrations/001_initial_schema.sql",
+      "summary": "Defines initial DB schema including users, goals, and related tables with RLS policies using pgcrypto for UUIDs."
+    },
+    {
+      "path": "supabase/functions/get_recent_foods.sql",
+      "summary": "SQL function returning the last 20 foods logged by a user, ordered by most recent log date."
+    },
+    {
+      "path": "supabase/functions/get_frequent_foods.sql",
+      "summary": "SQL function returning the most frequently logged foods for a user with a log_count, defaulting to top 10."
+    },
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Exports browser-safe singleton Supabase client, server admin client factory (bypasses RLS), and cookie-based server client helper."
+    },
+    {
+      "path": "src/lib/openai.ts",
+      "summary": "Initializes and exports OpenAI client using OPENAI_API_KEY env var."
+    },
+    {
+      "path": "src/types/food.ts",
+      "summary": "Defines core TypeScript interfaces for Food, NutritionValues, FoodSearchResult, RecentFood, and CreateFoodInput."
+    },
+    {
+      "path": "src/app/api/foods/search/route.ts",
+      "summary": "Next.js route handler for fuzzy food search by name/brand with limit and include_custom query params."
+    },
+    {
+      "path": "src/app/api/foods/recent/route.ts",
+      "summary": "Next.js route handler returning recent foods for the authenticated user via the get_recent_foods DB function."
+    }
+  ],
+  "extras": "To verify: run 001_initial_schema.sql, then get_recent_foods.sql and get_frequent_foods.sql in Supabase SQL editor, then apply foods_seed.sql. Test GET /api/foods/search?q=chicken and GET /api/foods/recent with a valid Bearer token. Follow-up risk: recent/frequent endpoints fall back to anon session which won't work server-side without cookie support — consider migrating to @supabase/ssr. Additional files were omitted due to context cap (started at index 9); UI components (autocomplete, food detail, custom food creation) may not be fully reviewed.",
+  "fallback_text": "PR #3 adds the food database and search system for NutriTrack. It includes an initial Supabase schema migration, a seed file for common foods, and two SQL functions for recent and frequent food lookups per user. Two Next.js API routes are added: /api/foods/search (fuzzy ilike on name/brand, max 50 results) and /api/foods/recent (auth-gated, calls get_recent_foods RPC). TypeScript types for Food, NutritionValues, FoodSearchResult, RecentFood, and CreateFoodInput are defined. An OpenAI client and a multi-mode Supabase client helper (browser, admin, server) are also introduced. Required env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY. Some files (likely UI components) were omitted due to context caps."
+}
