@@ -1,0 +1,53 @@
+{
+  "overview": "This PR establishes the complete PostgreSQL database schema for NutriTrack in Supabase, including six tables (users, goals, foods, meals, meal_items, nutrition_logs) with RLS policies and a meal-images storage bucket. TypeScript types mirroring the schema and typed utility functions for all major entities are added. No seed data or application logic is included.",
+  "summary_json": {
+    "Migration file": "supabase/migrations/001_initial_schema.sql — run via Supabase Dashboard SQL editor or `supabase db push`",
+    "Tables created": "users, goals, foods, meals, meal_items, nutrition_logs",
+    "Storage bucket": "meal-images (private, signed-URL access)",
+    "RLS": "Policies restrict all table access to the owning user",
+    "Env vars required": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY",
+    "Admin client": "createAdminClient() in src/lib/supabase.ts bypasses RLS — server/API use only",
+    "Out of scope": "Foods table seed data, application business logic",
+    "Cap note": "Files beyond index 9 were omitted from preview by context cap"
+  },
+  "files_changed": [
+    {
+      "path": "supabase/migrations/001_initial_schema.sql",
+      "summary": "Defines all six NutriTrack tables with constraints, CHECK enums, RLS policies, and the meal-images storage bucket via a single idempotent migration."
+    },
+    {
+      "path": "src/types/database.ts",
+      "summary": "Exports fully-typed Row/Insert/Update generics for every table, keeping TypeScript in sync with the Supabase schema."
+    },
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Exports a typed browser-safe singleton client and a factory for a service-role admin client that bypasses RLS."
+    },
+    {
+      "path": "src/lib/db/users.ts",
+      "summary": "Typed CRUD helpers (get, create, update) for the users table using the anon client."
+    },
+    {
+      "path": "src/lib/db/goals.ts",
+      "summary": "Helpers to fetch active/all goals and create a new goal, automatically deactivating prior active goals on insert."
+    },
+    {
+      "path": "src/lib/db/foods.ts",
+      "summary": "Full-text websearch and single-lookup helpers for the foods reference table, verified foods surfaced first."
+    },
+    {
+      "path": "src/lib/db/meals.ts",
+      "summary": "Fetches meals with nested meal_items by date range or ID, and provides create/update/delete operations."
+    },
+    {
+      "path": "src/lib/db/nutrition-logs.ts",
+      "summary": "Helpers to retrieve a single day's nutrition log or a date-range slice, ordered by log_date ascending."
+    },
+    {
+      "path": "src/lib/storage.ts",
+      "summary": "Provides upload, signed-URL generation, and delete helpers for the private meal-images Storage bucket."
+    }
+  ],
+  "extras": "Verify: run `supabase db push` against a fresh project, confirm all six tables exist, RLS is enabled, and the meal-images bucket is private. Follow-ups: seed the foods table, add DB indexes for high-frequency query columns (e.g. meals.user_id + logged_at), and confirm UTC date handling for non-UTC users.",
+  "fallback_text": "PR #1 adds the full NutriTrack Supabase setup: a single SQL migration creating users, goals, foods, meals, meal_items, and nutrition_logs tables with CHECK constraints and per-user RLS policies, plus a private meal-images storage bucket. TypeScript types in src/types/database.ts mirror every table with Row/Insert/Update variants. src/lib/supabase.ts exports a typed anon singleton and an admin factory (service role, bypasses RLS — server only). Typed DB utility modules cover users, goals, foods, meals, and nutrition logs. Required env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Seed data and app logic are out of scope."
+}
