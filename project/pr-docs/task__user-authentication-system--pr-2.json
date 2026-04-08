@@ -1,0 +1,59 @@
+{
+  "overview": "Implements a complete Supabase Auth-based user authentication system for the Next.js app. Covers signup, login, logout, password reset, session management via a React context provider, and protected-route middleware. OAuth and email verification enforcement are explicitly out of scope.",
+  "summary_json": {
+    "Auth routes added": "/auth/login, /auth/signup, /auth/forgot-password, /auth/reset-password",
+    "Protected routes": "/dashboard, /log, /progress, /profile",
+    "New env vars required": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY",
+    "Session strategy": "Cookie-based (sb-*-auth-token); middleware reads cookies without DB round-trip",
+    "Out of scope": "OAuth providers, email verification enforcement",
+    "Breaking changes": "None noted; middleware matcher excludes static assets"
+  },
+  "files_changed": [
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Exports browser singleton, server-side cookie-aware client factory, and admin (service-role) client factory for Supabase."
+    },
+    {
+      "path": "src/lib/openai.ts",
+      "summary": "Initialises and exports a shared OpenAI client using OPENAI_API_KEY."
+    },
+    {
+      "path": "src/contexts/AuthContext.tsx",
+      "summary": "React context/provider exposing user, session, loading state plus signUp, signIn, signOut, and resetPassword helpers."
+    },
+    {
+      "path": "src/middleware.ts",
+      "summary": "Next.js edge middleware that redirects unauthenticated users from protected routes to login and authenticated users away from auth pages."
+    },
+    {
+      "path": "src/app/auth/layout.tsx",
+      "summary": "Shared centred layout wrapper for all /auth/* pages."
+    },
+    {
+      "path": "src/app/auth/login/page.tsx",
+      "summary": "Login page with email/password form, user-friendly error mapping, and redirectTo support."
+    },
+    {
+      "path": "src/app/auth/signup/page.tsx",
+      "summary": "Signup page with password confirmation and minimum-length validation before calling Supabase signUp."
+    },
+    {
+      "path": "src/app/auth/forgot-password/page.tsx",
+      "summary": "Forgot-password page that triggers Supabase password reset email and shows a neutral success message."
+    },
+    {
+      "path": "src/app/auth/reset-password/page.tsx",
+      "summary": "Reset-password page that validates the Supabase session from the hash fragment before allowing the user to set a new password."
+    },
+    {
+      "path": "src/components/auth/LogoutButton.tsx",
+      "summary": "Reusable logout button component that calls signOut and redirects to /auth/login."
+    },
+    {
+      "path": "src/app/dashboard/page.tsx",
+      "summary": "Stub dashboard page that reads user from AuthContext and renders a loading state or user info with a logout button."
+    }
+  ],
+  "extras": "Verify: set all three Supabase env vars and confirm sb-*-auth-token cookies are being set after login. Risk: middleware cookie check is heuristic (prefix/suffix match) — if Supabase changes its cookie naming scheme it may silently break. Follow-up: add email verification enforcement and OAuth providers when needed.",
+  "fallback_text": "This PR ships a full Supabase Auth integration into the Next.js app. A React AuthContext provider wraps the app and exposes signUp, signIn, signOut, and resetPassword methods with session state. Next.js edge middleware guards /dashboard, /log, /progress, and /profile by checking for Supabase auth cookies, redirecting unauthenticated users to /auth/login (with a redirectTo param) and bouncing logged-in users away from auth pages. Four auth pages are added: login, signup, forgot-password, and reset-password, all sharing a centred layout. A reusable LogoutButton component is provided. The Supabase client module exports a browser singleton, a cookie-aware server factory, and a service-role admin factory. Required env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. OAuth and email verification enforcement are out of scope."
+}
