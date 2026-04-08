@@ -1,0 +1,57 @@
+{
+  "overview": "This PR builds a full user profile and goals management system. It adds a profile setup wizard for new users (weight, height, age, activity level), a goal-setting interface (weight loss, maintenance, muscle gain) with auto-calculated calorie/macro targets, and a profile view screen with edit capability. All data is persisted in new `user_profiles` and `goals` Supabase tables.",
+  "summary_json": {
+    "New API routes": "GET/PUT /api/profile, GET/POST /api/goals, PUT /api/goals/[id]",
+    "New DB tables": "user_profiles, goals (supabase/migrations/001_create_users_and_goals.sql)",
+    "Calorie calculation": "Mifflin-St Jeor BMR × activity multiplier; adjusted per goal type",
+    "Goal types": "weight_loss, maintenance, muscle_gain",
+    "Activity levels": "sedentary, lightly_active, moderately_active, very_active, extremely_active",
+    "Env vars required": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY",
+    "Unit support": "Imperial (lbs, ft/in) and metric (kg, cm) with conversion helpers in setup wizard",
+    "Out of scope": "Advanced TDEE calculators, detailed macro ratio customization"
+  },
+  "files_changed": [
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Adds browser singleton, cookie-aware server client, and service-role admin client factories for Supabase."
+    },
+    {
+      "path": "src/lib/openai.ts",
+      "summary": "Exports a shared OpenAI client instance using OPENAI_API_KEY env var."
+    },
+    {
+      "path": "supabase/migrations/001_create_users_and_goals.sql",
+      "summary": "Creates user_profiles and goals tables with constraints, RLS-ready schema, and updated_at triggers."
+    },
+    {
+      "path": "src/lib/nutrition-calculator.ts",
+      "summary": "Implements BMR (Mifflin-St Jeor) and TDEE calculation with per-goal-type calorie/macro target suggestions."
+    },
+    {
+      "path": "src/types/profile.ts",
+      "summary": "Defines TypeScript interfaces for UserProfile, Goal, and ProfileWithGoal used across the feature."
+    },
+    {
+      "path": "src/app/api/profile/route.ts",
+      "summary": "GET/PUT API route for reading and updating the authenticated user's profile in user_profiles."
+    },
+    {
+      "path": "src/app/api/goals/route.ts",
+      "summary": "GET/POST API route for fetching the active goal and creating new goals with auto-calculated macro targets."
+    },
+    {
+      "path": "src/app/api/goals/[id]/route.ts",
+      "summary": "PUT API route for updating a specific goal, with ownership verification before allowing edits."
+    },
+    {
+      "path": "src/app/(app)/profile/setup/page.tsx",
+      "summary": "Multi-step client-side profile setup wizard with imperial/metric unit conversion and suggested calorie preview."
+    },
+    {
+      "path": "src/app/(app)/profile/page.tsx",
+      "summary": "Server-rendered profile page that fetches current profile and active goal, redirecting to setup if incomplete."
+    }
+  ],
+  "extras": "Verify: run migration 001 against your Supabase project, confirm RLS policies are set on both tables, and test the setup wizard flow for a new user end-to-end. Follow-up: additional files were omitted due to context cap (components/profile/ProfileView and possibly others) — review those for completeness. Risk: admin client uses service-role key; ensure it is never exposed to the browser bundle.",
+  "fallback_text": "PR #4 ships user profile and goals management. New Supabase migration creates user_profiles (weight, height, age, gender, activity_level) and goals (goal_type, target_weight, daily calorie/macro targets, is_active flag) tables. A nutrition calculator library computes BMR via Mifflin-St Jeor and derives TDEE-based macro targets adjusted for goal type. Three API route groups are added: /api/profile (GET/PUT), /api/goals (GET/POST), and /api/goals/[id] (PUT with ownership check). A multi-step setup wizard page handles new user onboarding with imperial/metric unit conversion and a live calorie suggestion preview. A server-rendered profile page shows current settings and redirects incomplete profiles to setup. Supabase client helpers cover browser, cookie-aware server, and service-role admin usage. Required env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY."
+}
