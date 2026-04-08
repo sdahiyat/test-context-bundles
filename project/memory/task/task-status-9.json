@@ -1,0 +1,12 @@
+{
+  "schema": "cofabric.task_status.v1",
+  "task_number": 9,
+  "title": "AI Nutrition Insights & Feedback",
+  "status": "pending",
+  "priority": "medium",
+  "description": "",
+  "completion_summary": null,
+  "pr_url": null,
+  "pr_doc": null,
+  "updated_at": "2026-04-08T22:10:54.843Z"
+}

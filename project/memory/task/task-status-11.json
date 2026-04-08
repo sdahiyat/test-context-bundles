@@ -1,0 +1,12 @@
+{
+  "schema": "cofabric.task_status.v1",
+  "task_number": 11,
+  "title": "Navigation & App Shell",
+  "status": "pending",
+  "priority": "high",
+  "description": "",
+  "completion_summary": null,
+  "pr_url": null,
+  "pr_doc": null,
+  "updated_at": "2026-04-08T22:10:55.591Z"
+}

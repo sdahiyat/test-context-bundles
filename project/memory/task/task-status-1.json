@@ -1,0 +1,12 @@
+{
+  "schema": "cofabric.task_status.v1",
+  "task_number": 1,
+  "title": "Database Schema & Supabase Configuration",
+  "status": "pending",
+  "priority": "high",
+  "description": "",
+  "completion_summary": null,
+  "pr_url": null,
+  "pr_doc": null,
+  "updated_at": "2026-04-08T22:10:51.766Z"
+}
