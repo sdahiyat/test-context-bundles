@@ -1,0 +1,57 @@
+{
+  "overview": "This PR builds the main Nutrition Tracking Dashboard screen. It adds a date-navigable daily summary showing calorie progress (circular ring), macronutrient breakdown (progress bars), a macro distribution donut chart, and a list of today's meals with expandable detail and delete support. Data is fetched from a new API route backed by Supabase and auto-refreshes when meals are logged.",
+  "summary_json": {
+    "New API route": "GET /api/dashboard/summary?date=YYYY-MM-DD",
+    "Auth": "Session-gated via Supabase; returns 401 if no session",
+    "Date param": "Defaults to today (en-CA locale string); validated with YYYY-MM-DD regex",
+    "Auto-refresh": "useAutoRefresh hook polls on configurable interval when enabled",
+    "Macro calories multipliers": "Protein 4 kcal/g, Carbs 4 kcal/g, Fat 9 kcal/g (used in donut chart)",
+    "Unit conversions": "g/grams, oz (×28.35), serving (×100g), cup (×240g) in getGramsFromUnit",
+    "Out of scope": "Weekly/monthly summary views, nutrition score",
+    "Cap note": "Files after index 10 were omitted from preview due to size limits"
+  },
+  "files_changed": [
+    {
+      "path": "src/types/nutrition.ts",
+      "summary": "Defines core data interfaces (FoodItem, MealItem, MealWithItems, UserGoals, UserProfile) plus unit-conversion and nutrition calculation helpers used across the dashboard."
+    },
+    {
+      "path": "src/lib/supabase-server.ts",
+      "summary": "Exports createServerClient and createRouteClient helpers that wrap Supabase auth-helpers for server components and route handlers respectively."
+    },
+    {
+      "path": "src/hooks/useAutoRefresh.ts",
+      "summary": "Generic hook that runs a setInterval callback at a given interval when enabled, cleaning up on unmount or when disabled."
+    },
+    {
+      "path": "src/app/api/dashboard/summary/route.ts",
+      "summary": "GET route handler that fetches the authenticated user's meals and goals for a given date from Supabase and returns the aggregated daily nutrition summary."
+    },
+    {
+      "path": "src/app/dashboard/components/DateNavigator.tsx",
+      "summary": "Client component with prev/next day buttons that displays 'Today' or a formatted date string and disables the next button when already on today."
+    },
+    {
+      "path": "src/app/dashboard/components/CalorieSummaryCard.tsx",
+      "summary": "Renders a circular SVG progress ring showing calories consumed vs target, plus remaining or over-target callout."
+    },
+    {
+      "path": "src/app/dashboard/components/MacroSummarySection.tsx",
+      "summary": "Renders labeled horizontal progress bars for protein, carbs, and fat showing grams consumed vs goal and fill percentage."
+    },
+    {
+      "path": "src/app/dashboard/components/MacroDistributionChart.tsx",
+      "summary": "Custom SVG donut chart visualising calorie contribution of each macro with polar-to-cartesian arc math and a legend."
+    },
+    {
+      "path": "src/app/dashboard/components/MealsList.tsx",
+      "summary": "Lists today's meals grouped by type with expandable cards showing per-item nutrition; supports meal deletion with optimistic UI."
+    },
+    {
+      "path": "src/app/dashboard/DashboardClient.tsx",
+      "summary": "Top-level client component that wires date state, data fetching, auto-refresh, and renders all dashboard sub-components."
+    }
+  ],
+  "extras": "Verify: hit GET /api/dashboard/summary without a session to confirm 401; pass an invalid date string to confirm 400; log a meal and confirm auto-refresh updates totals. Follow-up risks: getGramsFromUnit falls through to raw quantity for unknown units (silent data error); Supabase types use `any` — consider generating typed schema. Files beyond index 10 were cap-truncated and not reviewed.",
+  "fallback_text": "PR #9 ships the Nutrition Tracking Dashboard on branch task/nutrition-tracking-dashboard. New files include shared TypeScript interfaces and nutrition math in src/types/nutrition.ts, Supabase server/route client helpers in src/lib/supabase-server.ts, a useAutoRefresh polling hook, and a GET API route at /api/dashboard/summary that accepts an optional YYYY-MM-DD date param (defaults to today) and returns session-gated daily nutrition data from Supabase. The dashboard UI is composed of: DateNavigator (prev/next day with 'Today' label), CalorieSummaryCard (circular SVG ring), MacroSummarySection (protein/carbs/fat progress bars), MacroDistributionChart (custom SVG donut), and MealsList (expandable cards with delete). DashboardClient.tsx orchestrates state, fetching, and auto-refresh. Unit conversions (g, oz, serving, cup) and per-meal nutrition calculation live in the types file. Weekly/monthly views and nutrition score are explicitly out of scope. Some files past index 10 were omitted due to preview caps."
+}
