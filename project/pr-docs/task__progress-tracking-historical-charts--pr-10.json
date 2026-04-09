@@ -1,0 +1,53 @@
+{
+  "overview": "This PR implements a full progress tracking screen with historical data visualization. It adds weight logging (daily entries via a new `weight_logs` table), calorie/macro history charts with 7/30/90-day views, streak calculation, and weekly averages — all powered by two new API routes and a recharts-based component suite. Body measurements and progress photos are explicitly out of scope.",
+  "summary_json": {
+    "New routes": "GET/POST /api/weight, GET /api/progress/summary",
+    "New page": "/progress (server component, auth-gated)",
+    "New dependency": "recharts ^2.10.0",
+    "New DB table": "weight_logs (UUID, user_id FK, weight_kg DECIMAL, logged_at TIMESTAMPTZ); one entry per user per UTC day enforced via unique index",
+    "RLS": "weight_logs has SELECT/INSERT/UPDATE policies scoped to auth.uid()",
+    "Chart views": "7, 30, 90 day period selector",
+    "Metrics tracked": "Calorie history, macro trends (protein/carbs/fat), weight progress with goal trend line, streak (consecutive days logged), weekly averages",
+    "Out of scope": "Body measurements, progress photos"
+  },
+  "files_changed": [
+    {
+      "path": "package.json",
+      "summary": "Adds recharts ^2.10.0 as a production dependency for charting."
+    },
+    {
+      "path": "supabase/migrations/20240110000001_create_weight_logs.sql",
+      "summary": "Creates weight_logs table with unique-per-day constraint, indexes, and RLS policies for per-user access control."
+    },
+    {
+      "path": "src/app/api/weight/route.ts",
+      "summary": "API route handling GET (fetch weight logs by date range) and POST (log daily weight) for the authenticated user."
+    },
+    {
+      "path": "src/app/api/progress/summary/route.ts",
+      "summary": "API route that aggregates calorie/macro history, streak count, weekly averages, and user goals from food logs and user profile."
+    },
+    {
+      "path": "src/app/progress/page.tsx",
+      "summary": "Server-rendered /progress page that enforces auth and renders the ProgressDashboard client component."
+    },
+    {
+      "path": "src/components/progress/ProgressDashboard.tsx",
+      "summary": "Top-level client component orchestrating data fetching for progress summary and weight data, composing all sub-charts and cards."
+    },
+    {
+      "path": "src/components/progress/PeriodSelector.tsx",
+      "summary": "Toggle button group for switching between 7/30/90-day chart views."
+    },
+    {
+      "path": "src/components/progress/StreakCard.tsx",
+      "summary": "Displays current logging streak and weekly average stats (calories, protein, carbs, fat)."
+    },
+    {
+      "path": "src/components/progress/CalorieHistoryChart.tsx",
+      "summary": "Bar chart showing daily calorie intake with a goal reference line, using recharts with a custom tooltip."
+    }
+  ],
+  "extras": "Run the migration `supabase/migrations/20240110000001_create_weight_logs.sql` against your Supabase project before deploying. Verify RLS by testing as a second user that weight logs are not cross-visible. The cap_note indicates additional files (WeightProgressChart, MacroTrendChart, WeightLogForm, etc.) were omitted from the preview — confirm those exist in the branch before merging.",
+  "fallback_text": "PR #10 adds a progress tracking screen to the NutriTrack app. It introduces a weight_logs Supabase table (one entry per user per UTC day, RLS-enforced) via a new migration, two API routes (/api/weight and /api/progress/summary), and a /progress page. The UI is built with recharts (newly added dependency) and includes a calorie history bar chart, macro trend chart, weight progress chart with goal line, a period selector (7/30/90 days), streak card, and weight log form. Weekly averages and consecutive-day streaks are calculated server-side. The migration must be applied before deployment; additional component files (WeightProgressChart, MacroTrendChart, WeightLogForm) were beyond the preview cap but should be verified in the branch."
+}
