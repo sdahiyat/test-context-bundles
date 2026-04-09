@@ -1,0 +1,58 @@
+{
+  "overview": "This PR implements AI-powered food recognition from photos using OpenAI Vision API (gpt-4o). Users can upload or capture a food photo, which is stored in Supabase Storage and analyzed by the Vision API; recognized foods with estimated portions and nutrition are displayed in an editable UI before being saved as a meal entry. Error handling falls back to manual entry, and offline/multi-photo scenarios are out of scope.",
+  "summary_json": {
+    "New routes": "POST /api/nutrition/upload-image, POST /api/nutrition/analyze-photo, POST /api/nutrition/save-meal",
+    "New page": "/log/photo (SSR-disabled, auth-gated)",
+    "New env keys": "OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY",
+    "AI model": "gpt-4o via OpenAI Chat Completions (vision)",
+    "Image size limit": "20MB per upload",
+    "Supported MIME types": "image/jpeg, image/png, image/webp, image/gif, image/heic, image/heif",
+    "Storage": "Supabase Storage (admin client used for server-side uploads)",
+    "Out of scope": "Offline recognition, multiple photos per meal",
+    "Breaking changes": "None noted"
+  },
+  "files_changed": [
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Exports both anon and service-role Supabase clients plus a createAdminClient helper for server-side operations."
+    },
+    {
+      "path": "src/lib/openai.ts",
+      "summary": "Initializes and exports the OpenAI client using OPENAI_API_KEY."
+    },
+    {
+      "path": "src/types/nutrition.ts",
+      "summary": "Defines core types: RecognizedFood, PhotoRecognitionResult, Meal, MealItem, Food, MealType, and nutrition total interfaces."
+    },
+    {
+      "path": "src/app/api/nutrition/analyze-photo/route.ts",
+      "summary": "POST endpoint that calls OpenAI Vision (gpt-4o) with an image URL, parses the JSON response into RecognizedFood array, and returns results."
+    },
+    {
+      "path": "src/app/api/nutrition/upload-image/route.ts",
+      "summary": "POST endpoint that accepts a base64 image, converts it, and uploads it to Supabase Storage via the admin client."
+    },
+    {
+      "path": "src/app/api/nutrition/save-meal/route.ts",
+      "summary": "POST endpoint that inserts a meal row and associated meal_items into Supabase using the confirmed RecognizedFood list."
+    },
+    {
+      "path": "src/components/photo/PhotoUpload.tsx",
+      "summary": "Client component for drag-and-drop or file-input image selection with preview, validation (type/size), and upload-to-API flow."
+    },
+    {
+      "path": "src/components/photo/RecognitionResults.tsx",
+      "summary": "Editable results UI showing recognized foods with portion/unit/nutrition fields, meal-type selector, and confirm/retry/manual-entry actions."
+    },
+    {
+      "path": "src/components/photo/PhotoRecognitionFlow.tsx",
+      "summary": "Orchestrator component managing step state (upload → analyzing → results → saving → success/error) and wiring PhotoUpload and RecognitionResults together."
+    },
+    {
+      "path": "src/app/log/photo/page.tsx",
+      "summary": "Auth-gated Next.js page that dynamically loads PhotoRecognitionFlow (SSR disabled) and redirects unauthenticated users."
+    }
+  ],
+  "extras": "Verify: ensure the Supabase Storage bucket for food images exists and has appropriate policies for the service role. Confirm OPENAI_API_KEY is set in all deployment environments. Risk: gpt-4o vision responses are parsed as raw JSON — malformed responses could cause 500s; consider adding a retry/parse-fallback. Follow-up: add rate limiting on /api/nutrition/analyze-photo to control OpenAI costs.",
+  "fallback_text": "PR #8 adds end-to-end AI photo food recognition. Three new API routes handle image upload to Supabase Storage, OpenAI Vision analysis (gpt-4o), and meal saving. Three new React components cover photo capture/upload, editable recognition results, and the overall multi-step flow. A new /log/photo page ties it together with auth gating. New env vars required: OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. Images are capped at 20MB; offline and multi-photo scenarios are explicitly out of scope."
+}
