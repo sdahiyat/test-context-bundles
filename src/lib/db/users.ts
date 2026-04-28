@@ -1,90 +1,67 @@
-import { supabase } from '@/lib/supabase'
-import { UserRow, UserInsert, UserUpdate, GoalRow } from '@/types/database'
+import { supabase } from '@/lib/supabase/client';
+import type { Database, UserRow } from '@/lib/supabase/types';
+
+type UserInsert = Database['public']['Tables']['users']['Insert'];
+type UserUpdate = Database['public']['Tables']['users']['Update'];
 
 /**
- * Fetch a user profile by their ID.
- * Returns null if the user does not exist.
+ * Fetches the public profile for a given user ID.
+ * Returns null if the profile does not yet exist (e.g. new signup).
+ * Throws on unexpected database errors.
  */
-export async function getUserById(id: string): Promise<UserRow | null> {
+export async function getUserProfile(userId: string): Promise<UserRow | null> {
   const { data, error } = await supabase
     .from('users')
     .select('*')
-    .eq('id', id)
-    .maybeSingle()
+    .eq('id', userId)
+    .single();
 
   if (error) {
-    throw new Error(`Failed to fetch user: ${error.message}`)
+    // PGRST116 = "The result contains 0 rows" — treat as not found
+    if (error.code === 'PGRST116') return null;
+    throw new Error(`getUserProfile failed: ${error.message}`);
   }
 
-  return data
+  return data;
 }
 
 /**
- * Create a new user profile row.
- * The id must match an existing auth.users record.
+ * Inserts or updates a user profile row.
+ * Commonly used after signup to persist extra metadata collected
+ * during onboarding (full name, DOB, activity level, etc.).
  */
-export async function createUser(user: UserInsert): Promise<UserRow> {
-  const { data, error } = await supabase
+export async function upsertUserProfile(data: UserInsert): Promise<UserRow> {
+  const { data: row, error } = await supabase
     .from('users')
-    .insert(user)
+    .upsert(data)
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw new Error(`Failed to create user: ${error.message}`)
+    throw new Error(`upsertUserProfile failed: ${error.message}`);
   }
 
-  return data
+  return row;
 }
 
 /**
- * Update an existing user profile.
- * Returns the updated row.
+ * Partially updates a user profile.
+ * Throws if the row is not found or the update fails.
  */
-export async function updateUser(id: string, updates: UserUpdate): Promise<UserRow> {
+export async function updateUserProfile(
+  userId: string,
+  updates: UserUpdate
+): Promise<UserRow> {
   const { data, error } = await supabase
     .from('users')
     .update(updates)
-    .eq('id', id)
+    .eq('id', userId)
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw new Error(`Failed to update user: ${error.message}`)
+    throw new Error(`updateUserProfile failed: ${error.message}`);
   }
 
-  return data
-}
-
-/**
- * Fetch a user along with their currently active goal in a single request.
- * Returns { user, goal } where goal may be null if no active goal exists.
- */
-export async function getUserWithActiveGoal(
-  id: string
-): Promise<{ user: UserRow; goal: GoalRow | null }> {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*, goals!goals_user_id_fkey(*)')
-    .eq('id', id)
-    .eq('goals.is_active', true)
-    .maybeSingle()
-
-  if (error) {
-    throw new Error(`Failed to fetch user with active goal: ${error.message}`)
-  }
-
-  if (!data) {
-    throw new Error(`User not found: ${id}`)
-  }
-
-  // Supabase returns the joined relation as an array; extract the first active goal.
-  const goals = (data as unknown as { goals: GoalRow[] }).goals
-  const goal = Array.isArray(goals) && goals.length > 0 ? goals[0] : null
-
-  // Strip the nested goals array and return a clean user row.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { goals: _goals, ...userRow } = data as UserRow & { goals: GoalRow[] }
-
-  return { user: userRow as UserRow, goal }
+  return data;
 }

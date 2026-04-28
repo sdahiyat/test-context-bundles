@@ -1,9 +1,11 @@
-import { supabase } from '@/lib/supabase'
-import { GoalRow, GoalInsert, GoalUpdate } from '@/types/database'
+import { supabase } from '@/lib/supabase/client';
+import type { Database, GoalRow } from '@/lib/supabase/types';
+
+type GoalInsert = Database['public']['Tables']['goals']['Insert'];
+type GoalUpdate = Database['public']['Tables']['goals']['Update'];
 
 /**
- * Fetch the currently active goal for a user.
- * Returns null if no active goal exists.
+ * Returns the currently active goal for a user, or null if none exists.
  */
 export async function getActiveGoal(userId: string): Promise<GoalRow | null> {
   const { data, error } = await supabase
@@ -11,100 +13,83 @@ export async function getActiveGoal(userId: string): Promise<GoalRow | null> {
     .select('*')
     .eq('user_id', userId)
     .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+    .maybeSingle();
 
   if (error) {
-    throw new Error(`Failed to fetch active goal: ${error.message}`)
+    throw new Error(`getActiveGoal failed: ${error.message}`);
   }
 
-  return data
+  return data;
 }
 
 /**
- * Fetch all goals for a user, newest first.
+ * Returns all goals for a user, newest first (goal history).
  */
-export async function getAllGoals(userId: string): Promise<GoalRow[]> {
+export async function getUserGoals(userId: string): Promise<GoalRow[]> {
   const { data, error } = await supabase
     .from('goals')
     .select('*')
     .eq('user_id', userId)
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: false });
 
   if (error) {
-    throw new Error(`Failed to fetch goals: ${error.message}`)
+    throw new Error(`getUserGoals failed: ${error.message}`);
   }
 
-  return data ?? []
+  return data ?? [];
 }
 
 /**
- * Create a new goal for a user.
- * Deactivates all existing active goals before inserting the new one.
+ * Creates a new goal for the user.
+ * First deactivates any existing active goal to maintain the
+ * partial unique index constraint (one active goal per user).
  */
-export async function createGoal(goal: GoalInsert): Promise<GoalRow> {
-  // Deactivate any currently active goals for this user.
+export async function createGoal(
+  userId: string,
+  goal: Omit<GoalInsert, 'user_id'>
+): Promise<GoalRow> {
+  // Deactivate existing active goal (if any)
   const { error: deactivateError } = await supabase
     .from('goals')
     .update({ is_active: false })
-    .eq('user_id', goal.user_id)
-    .eq('is_active', true)
+    .eq('user_id', userId)
+    .eq('is_active', true);
 
   if (deactivateError) {
-    throw new Error(`Failed to deactivate existing goals: ${deactivateError.message}`)
+    throw new Error(`createGoal (deactivate) failed: ${deactivateError.message}`);
   }
 
-  // Insert the new goal (always active).
+  // Insert the new active goal
   const { data, error } = await supabase
     .from('goals')
-    .insert({ ...goal, is_active: true })
+    .insert({ ...goal, user_id: userId, is_active: true })
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw new Error(`Failed to create goal: ${error.message}`)
+    throw new Error(`createGoal (insert) failed: ${error.message}`);
   }
 
-  return data
+  return data;
 }
 
 /**
- * Update a specific goal.
- * Requires userId to prevent users from modifying other users' goals.
+ * Updates fields on an existing goal by ID.
  */
 export async function updateGoal(
-  id: string,
-  userId: string,
+  goalId: string,
   updates: GoalUpdate
 ): Promise<GoalRow> {
   const { data, error } = await supabase
     .from('goals')
     .update(updates)
-    .eq('id', id)
-    .eq('user_id', userId)
+    .eq('id', goalId)
     .select()
-    .single()
+    .single();
 
   if (error) {
-    throw new Error(`Failed to update goal: ${error.message}`)
+    throw new Error(`updateGoal failed: ${error.message}`);
   }
 
-  return data
-}
-
-/**
- * Deactivate a specific goal without deleting it.
- * Requires userId as a security check.
- */
-export async function deactivateGoal(id: string, userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('goals')
-    .update({ is_active: false })
-    .eq('id', id)
-    .eq('user_id', userId)
-
-  if (error) {
-    throw new Error(`Failed to deactivate goal: ${error.message}`)
-  }
+  return data;
 }
