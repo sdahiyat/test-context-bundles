@@ -1,0 +1,52 @@
+{
+  "overview": "This PR implements the full PostgreSQL database schema in Supabase for a nutrition-tracking app. It adds all core tables (users, goals, foods, meals, meal_items, nutrition_logs), RLS policies, stored functions, a meal-images storage bucket, and TypeScript DB types plus client/server Supabase clients and utility query helpers. Seed data and application logic are explicitly out of scope.",
+  "summary_json": {
+    "Tables created": "users, goals, foods, meals, meal_items, nutrition_logs",
+    "RLS": "Per-user select/insert/update/delete policies on all tables; storage bucket RLS scoped to user folder",
+    "Storage bucket": "meal-images (private, 5 MB limit, jpeg/png/webp/heic), path convention: {user_id}/{timestamp}_{filename}",
+    "Key functions": "handle_updated_at (trigger), handle_new_user (auto-creates profile on auth signup), recalculate_meal_totals",
+    "Env vars required": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY",
+    "Breaking changes": "None; initial schema migrations",
+    "Out of scope": "Foods seed data, application logic"
+  },
+  "files_changed": [
+    {
+      "path": "supabase/migrations/001_initial_schema.sql",
+      "summary": "Creates all core tables with constraints, indexes, updated_at triggers, and enables RLS."
+    },
+    {
+      "path": "supabase/migrations/002_rls_policies.sql",
+      "summary": "Defines per-user SELECT/INSERT/UPDATE/DELETE RLS policies for every table."
+    },
+    {
+      "path": "supabase/migrations/003_functions.sql",
+      "summary": "Adds handle_new_user trigger (auto-creates profile on signup) and recalculate_meal_totals stored function."
+    },
+    {
+      "path": "supabase/migrations/004_storage.sql",
+      "summary": "Creates the private meal-images bucket and scopes storage RLS policies to each user's folder."
+    },
+    {
+      "path": "src/lib/supabase/types.ts",
+      "summary": "TypeScript Database interface with typed Row/Insert/Update shapes for all tables, used by both clients."
+    },
+    {
+      "path": "src/lib/supabase/client.ts",
+      "summary": "Browser-side Supabase singleton using the anon key; respects RLS for use in Client Components."
+    },
+    {
+      "path": "src/lib/supabase/server.ts",
+      "summary": "Factory for a server-side Supabase client using the service-role key that bypasses RLS; for API routes and Server Actions only."
+    },
+    {
+      "path": "src/lib/db/users.ts",
+      "summary": "getUserProfile and upsertUserProfile query helpers wrapping the users table."
+    },
+    {
+      "path": "src/lib/db/goals.ts",
+      "summary": "getActiveGoal and getUserGoals query helpers for the goals table."
+    }
+  ],
+  "extras": "Verify by running migrations in order (001→004) against a fresh Supabase project and confirming RLS blocks cross-user reads. Follow-up: seed data for the foods reference table is explicitly deferred; service-role key must never be committed or exposed client-side.",
+  "fallback_text": "PR #12 ships the complete Supabase backend foundation. Four ordered SQL migrations create all tables (users, goals, foods, meals, meal_items, nutrition_logs) with proper FK relationships and updated_at triggers (001), add per-user RLS policies on every table (002), add auto-profile-creation and meal-totals recalculation triggers/functions (003), and configure a private meal-images storage bucket with folder-scoped RLS (004). On the TypeScript side there are full typed Database interfaces, a browser singleton client (anon key, respects RLS), a server client factory (service-role key, bypasses RLS), and initial query helpers for users and goals. Required env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY. No seed data or app logic is included."
+}
