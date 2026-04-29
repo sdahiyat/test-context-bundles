@@ -1,0 +1,60 @@
+{
+  "overview": "This PR establishes the complete PostgreSQL database schema and Supabase configuration for the NutriTrack app. It adds all core tables (users, goals, foods, meals, meal_items, nutrition_logs), RLS policies, a Supabase Storage bucket for meal images, and TypeScript DB utility functions. Application logic and food seed data are explicitly out of scope.",
+  "summary_json": {
+    "Tables added": "users, goals, foods, meals, meal_items, nutrition_logs",
+    "Storage bucket": "meal-images (signed URLs, 1h TTL, per-user path prefix)",
+    "Security": "RLS policies ensure users access only their own rows",
+    "Env vars required": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, NEXTAUTH_SECRET, NEXTAUTH_URL",
+    "Key deps added": "@supabase/ssr ^0.1.0, @supabase/supabase-js ^2.39.0, openai ^4.24.0",
+    "Out of scope": "Foods seed data, application logic",
+    "Branch": "task/database-schema-supabase-configuration-17"
+  },
+  "files_changed": [
+    {
+      "path": "project/.env.example",
+      "summary": "Documents all required environment variables for Supabase, OpenAI, NextAuth, and app URL."
+    },
+    {
+      "path": "project/package.json",
+      "summary": "Adds Supabase SSR/JS client and OpenAI SDK as runtime dependencies alongside Next.js 14 and Tailwind."
+    },
+    {
+      "path": "project/src/lib/db/foods.ts",
+      "summary": "Utility functions for searching foods by name (ilike), fetching by ID, and creating food records."
+    },
+    {
+      "path": "project/src/lib/db/goals.ts",
+      "summary": "Utility functions to get the active goal for a user, create a new goal, and update an existing goal."
+    },
+    {
+      "path": "project/src/lib/db/meal-items.ts",
+      "summary": "Utility functions to get, add, and update meal items; triggers updateMealTotals after mutations."
+    },
+    {
+      "path": "project/src/lib/db/meals.ts",
+      "summary": "Utility functions for querying meals by date range, by ID, and with nested items; includes dayBounds helper."
+    },
+    {
+      "path": "project/src/lib/db/nutrition-logs.ts",
+      "summary": "Utility functions to fetch a single daily nutrition log, a date range, and upsert aggregated log entries."
+    },
+    {
+      "path": "project/src/lib/db/storage.ts",
+      "summary": "Handles meal image upload to the meal-images bucket with sanitized filenames and generates signed URLs."
+    },
+    {
+      "path": "project/src/lib/db/users.ts",
+      "summary": "CRUD utility functions for user profiles: get, create, and update via Supabase client."
+    },
+    {
+      "path": "project/src/lib/supabase/client.ts",
+      "summary": "Creates and exports a typed Supabase browser client using NEXT_PUBLIC_ env vars."
+    },
+    {
+      "path": "project/src/lib/supabase/middleware.ts",
+      "summary": "Sets up a server-side Supabase client with cookie handling for Next.js middleware auth."
+    }
+  ],
+  "extras": "Verify: copy .env.example to .env.local and fill all keys; confirm Supabase migrations have been applied and RLS policies are active; test signed URL expiry. Follow-ups: add foods seed data, wire application logic, consider server-side client file (likely omitted due to cap).",
+  "fallback_text": "PR #13 ships the full Supabase database layer for NutriTrack. Six tables are defined (users, goals, foods, meals, meal_items, nutrition_logs) with RLS so each user only sees their own data. A meal-images Storage bucket is configured with per-user paths and 1-hour signed URLs. TypeScript utility modules under src/lib/db/ cover CRUD for every table. The Supabase browser and middleware clients are typed against a Database type. Required env vars are NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY, NEXTAUTH_SECRET, and NEXTAUTH_URL. Food seed data and app logic are deferred to later tasks. Some files were omitted from the preview due to context caps."
+}
