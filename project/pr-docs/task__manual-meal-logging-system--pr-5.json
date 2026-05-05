@@ -1,0 +1,53 @@
+{
+  "overview": "This PR implements a complete manual meal logging system, allowing users to select a meal type, search foods from a database, specify portion sizes, build multi-item meals with running nutrition totals, and save/edit/delete logged meals. It introduces new Supabase tables (meals, meal_items) with RLS policies, REST API routes, and a multi-step React UI flow. Food seed data and shared nutrition type definitions are also added.",
+  "summary_json": {
+    "New API routes": "GET/POST /api/meals, GET/PUT/DELETE /api/meals/[id], GET /api/foods/search",
+    "New DB tables": "meals, meal_items (migration 002_meals_schema.sql)",
+    "RLS": "Row-level security enabled on meals and meal_items; users can only access own rows",
+    "Portion units supported": "g, oz, cup, serving",
+    "Meal types": "breakfast, lunch, dinner, snack",
+    "Seed data": "Common foods seeded in 003_seed_foods.sql (proteins, grains, and more)",
+    "Out of scope": "Meal templates, copy previous meal functionality",
+    "Files omitted by cap": "Additional component/page files beyond index 9 were truncated"
+  },
+  "files_changed": [
+    {
+      "path": "src/types/nutrition.ts",
+      "summary": "Defines shared TypeScript interfaces (Food, Meal, MealItem, MealTotals) and constants (PORTION_UNITS, UNIT_TO_GRAMS, MEAL_TYPES) used across the feature."
+    },
+    {
+      "path": "supabase/migrations/002_meals_schema.sql",
+      "summary": "Creates meals and meal_items tables with UUID PKs, foreign keys, RLS enabled, and user-scoped CRUD policies."
+    },
+    {
+      "path": "supabase/migrations/003_seed_foods.sql",
+      "summary": "Seeds the foods table with common proteins, grains, and other staples for use in food search."
+    },
+    {
+      "path": "src/app/api/meals/route.ts",
+      "summary": "GET (list meals, filterable by date) and POST (create meal with items) route handler with session auth."
+    },
+    {
+      "path": "src/app/api/meals/[id]/route.ts",
+      "summary": "GET, PUT, and DELETE route handlers for individual meals, with ownership checks before mutations."
+    },
+    {
+      "path": "src/app/api/foods/search/route.ts",
+      "summary": "Food search endpoint that returns query-matched foods or falls back to recent/popular foods when query is empty."
+    },
+    {
+      "path": "src/components/meal-logging/MealTypeSelector.tsx",
+      "summary": "Step-one UI component for selecting meal type (breakfast/lunch/dinner/snack) and logging date before proceeding."
+    },
+    {
+      "path": "src/components/meal-logging/FoodSearchPanel.tsx",
+      "summary": "Debounced food search panel with dropdown results, portion unit/quantity inputs, and live nutrition preview before adding an item."
+    },
+    {
+      "path": "src/components/meal-logging/MealItemsList.tsx",
+      "summary": "Displays the list of pending meal items with running nutrition totals and item removal support."
+    }
+  ],
+  "extras": "Run migration 002 then 003 in order against your Supabase project. Verify RLS by attempting cross-user meal access. Check that the foods search fallback query (joining meal_items→meals for user scoping) returns correct results — the join condition may need review. Additional component/page files (step orchestration, confirmation screen, edit flow) were cut by the file cap and should be reviewed separately.",
+  "fallback_text": "PR #5 builds the full manual meal logging feature. New Supabase migrations add meals and meal_items tables with RLS. Three API routes handle CRUD for meals and food search. Shared TypeScript types cover Food, Meal, MealItem, PortionUnit, and MealTotals with unit-conversion constants. UI components cover meal type + date selection, debounced food search with portion sizing, and a running items list. Common foods are seeded. Meal templates and copy-meal are out of scope. Some component files were omitted due to preview caps."
+}
