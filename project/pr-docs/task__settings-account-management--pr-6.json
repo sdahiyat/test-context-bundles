@@ -1,0 +1,53 @@
+{
+  "overview": "This PR adds a full Settings & Account Management screen to the app, covering user preferences, notification toggles, account actions, and an about section. It introduces server-side API routes for persisting preferences, changing passwords, and exporting meal history as CSV. The settings page is auth-gated via Supabase session and renders sections with Suspense skeletons.",
+  "summary_json": {
+    "New routes": "PATCH /api/settings/preferences, POST /api/settings/change-password, GET /api/settings/export-data",
+    "New pages": "/settings (server component, auth-gated)",
+    "Supabase table": "user_settings (upsert on user_id)",
+    "Preference fields": "weight_unit, calorie_display, theme, meal_reminders, daily_summary, reminder_time",
+    "Theme support": "light / dark / system via Tailwind CSS dark: classes",
+    "Password change caveat": "Current password is NOT re-verified — Supabase client SDK limitation; noted in code for production follow-up",
+    "Out of scope": "Push notification implementation, third-party integration settings",
+    "Breaking changes": "None noted"
+  },
+  "files_changed": [
+    {
+      "path": "src/app/settings/page.tsx",
+      "summary": "Server component settings page: checks Supabase session, loads user_settings row, and renders all sections inside Suspense with animated skeleton fallbacks."
+    },
+    {
+      "path": "src/app/settings/components/SettingsCard.tsx",
+      "summary": "Reusable card wrapper with title, optional description, and dark-mode-aware styling used across all settings sections."
+    },
+    {
+      "path": "src/app/settings/components/AccountSection.tsx",
+      "summary": "Client component handling email display, password change form, CSV data export trigger, and account deletion with typed confirmation guard."
+    },
+    {
+      "path": "src/app/settings/components/PreferencesSection.tsx",
+      "summary": "Client component for weight unit, calorie display, and theme preferences with debounced auto-save to the preferences API."
+    },
+    {
+      "path": "src/app/settings/components/NotificationsSection.tsx",
+      "summary": "Client component with accessible toggle switches for meal reminders and daily summary, plus reminder time input."
+    },
+    {
+      "path": "src/app/settings/components/AboutSection.tsx",
+      "summary": "Static client component showing app version (hardcoded 1.0.0), support contact link, and other informational items."
+    },
+    {
+      "path": "src/app/api/settings/preferences/route.ts",
+      "summary": "PATCH route that whitelist-filters allowed fields and upserts them into user_settings for the authenticated user."
+    },
+    {
+      "path": "src/app/api/settings/change-password/route.ts",
+      "summary": "POST route that validates and updates the user's password via supabase.auth.updateUser; does not re-verify current password (MVP caveat documented)."
+    },
+    {
+      "path": "src/app/api/settings/export-data/route.ts",
+      "summary": "GET route that queries meal history with joined food data and streams it back as a downloadable CSV file."
+    }
+  ],
+  "extras": "Verify: sign in, visit /settings, toggle preferences and confirm upsert in user_settings table, test password change with <8 char and valid input, download CSV and confirm meal rows. Follow-up: add current-password re-verification (re-auth flow) before shipping password change to production; push notification implementation deferred.",
+  "fallback_text": "PR 6 ships the Settings & Account Management feature. A new /settings server page (auth-gated via Supabase) renders four sections — Preferences, Notifications, Account, About — each wrapped in Suspense with skeleton loaders. Three API routes are added: PATCH /api/settings/preferences (whitelisted field upsert), POST /api/settings/change-password (no current-password re-verify, documented MVP limitation), and GET /api/settings/export-data (CSV download of meal history). Preferences include weight unit (metric/imperial), calorie display (kcal/kJ), theme (light/dark/system), meal reminders, daily summary, and reminder time. Account section supports email display, password change, data export, and account deletion with typed confirmation. Push notifications and third-party integration settings are out of scope. No breaking changes; requires user_settings table in Supabase."
+}
