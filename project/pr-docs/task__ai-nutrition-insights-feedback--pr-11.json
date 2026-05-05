@@ -1,0 +1,62 @@
+{
+  "overview": "This PR adds AI-powered nutrition insights to NutriTrack, using OpenAI to analyze 7–30 days of meal history and surface patterns, habits, and actionable suggestions. A new insights generation service, two API routes (GET with 24h staleness cache and POST regenerate with 6h rate limit), and a full display UI are introduced. A Supabase migration creates the `nutrition_insights` table with RLS policies to persist cached results per user.",
+  "summary_json": {
+    "New routes": "GET /api/insights, POST /api/insights/regenerate",
+    "New page": "/insights",
+    "Cache TTL": "24 hours (auto-refresh on GET)",
+    "Regeneration rate limit": "Once per 6 hours",
+    "Analysis window": "7–30 days of meal history",
+    "New env vars": "OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "New DB table": "nutrition_insights (UUID PK, user_id FK, summary, patterns JSONB, suggestions JSONB, period_days, generated_at)",
+    "RLS": "SELECT, INSERT, DELETE policies scoped to auth.uid()",
+    "Out of scope": "Meal recommendations, automated meal planning"
+  },
+  "files_changed": [
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Initializes and exports the Supabase client using env-provided URL and anon key."
+    },
+    {
+      "path": "src/lib/openai.ts",
+      "summary": "Initializes and exports the OpenAI client using OPENAI_API_KEY."
+    },
+    {
+      "path": "src/lib/insights.ts",
+      "summary": "Core service: builds nutrition prompts from meal history and user goals, calls OpenAI, and returns typed InsightResult with patterns and suggestions."
+    },
+    {
+      "path": "src/app/api/insights/route.ts",
+      "summary": "GET handler that returns cached insights if fresh (<24h) or generates new ones via the insights service."
+    },
+    {
+      "path": "src/app/api/insights/regenerate/route.ts",
+      "summary": "POST handler that forces insight regeneration, enforcing a 6-hour per-user rate limit."
+    },
+    {
+      "path": "src/components/insights/InsightsCard.tsx",
+      "summary": "Reusable card component rendering a single pattern or suggestion with severity/priority styling."
+    },
+    {
+      "path": "src/components/insights/InsightsSummary.tsx",
+      "summary": "Banner component displaying the AI-generated summary text, relative timestamp, and analysis period."
+    },
+    {
+      "path": "src/components/insights/InsightsPanel.tsx",
+      "summary": "Main client panel orchestrating fetch, skeleton loading, error states, and rendering InsightsSummary + InsightsCard list with a regenerate button."
+    },
+    {
+      "path": "src/app/insights/page.tsx",
+      "summary": "Next.js page at /insights that mounts InsightsPanel with page metadata and a sticky header."
+    },
+    {
+      "path": "supabase/migrations/20240109000000_create_nutrition_insights.sql",
+      "summary": "Creates the nutrition_insights table with indexes and RLS policies to cache and secure AI-generated insights per user."
+    },
+    {
+      "path": "src/app/layout.tsx",
+      "summary": "Updated root layout, likely adding a nav link to the new /insights page."
+    }
+  ],
+  "extras": "Verify: run the migration against your Supabase project, set OPENAI_API_KEY, then hit GET /api/insights with a logged-in session. Check that regeneration is blocked within 6h. Follow-ups: consider purging old insight rows to control table growth; monitor OpenAI token usage per user for cost.",
+  "fallback_text": "PR #11 ships AI nutrition insights for NutriTrack. A new lib/insights.ts service queries recent meal logs from Supabase, builds a prompt with user goals, and calls OpenAI to produce patterns (e.g., low protein, high sodium) and prioritized suggestions. Results are stored in a new nutrition_insights Supabase table (with RLS) and cached for 24h. GET /api/insights returns fresh or cached insights; POST /api/insights/regenerate forces a new generation with a 6h rate limit. The /insights page renders everything via InsightsPanel, InsightsSummary, and InsightsCard components. Required env vars: OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY. A Supabase migration must be applied to create the table."
+}
