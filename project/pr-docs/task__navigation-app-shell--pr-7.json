@@ -1,0 +1,56 @@
+{
+  "overview": "This PR implements the main app navigation shell and shared UI component library. It adds a bottom tab bar with five tabs (Dashboard, Log Meal, Progress, Profile, Settings), auth-aware navigation guards, and a set of reusable UI primitives. Responsive layout support for mobile and desktop is included; animations and gestures are explicitly out of scope.",
+  "summary_json": {
+    "Nav tabs": "Dashboard (/dashboard), Log Meal (/log), Progress (/progress), Profile (/profile), Settings (/settings)",
+    "Env vars required": "NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY",
+    "New contexts": "AuthContext (auth state + helpers), ToastContext (add/remove toasts)",
+    "New UI components": "LoadingSpinner, LoadingPage, ErrorBoundary, EmptyState, ToastContainer",
+    "Navigation components": "BottomTabBar, navConfig (NavItem definitions)",
+    "Out of scope": "Animations, gestures, offline indicators",
+    "Breaking changes": "None noted"
+  },
+  "files_changed": [
+    {
+      "path": "src/lib/supabase.ts",
+      "summary": "Exports browser singleton, cookie-based server client factory, and admin service-role client for Supabase."
+    },
+    {
+      "path": "src/lib/openai.ts",
+      "summary": "Exports a shared OpenAI client instance initialized with OPENAI_API_KEY."
+    },
+    {
+      "path": "src/contexts/AuthContext.tsx",
+      "summary": "React context providing user/session state and signUp, signIn, signOut, resetPassword helpers backed by Supabase auth."
+    },
+    {
+      "path": "src/contexts/ToastContext.tsx",
+      "summary": "React context managing a toast queue with addToast/removeToast and auto-dismiss by duration."
+    },
+    {
+      "path": "src/components/ui/LoadingSpinner.tsx",
+      "summary": "SVG spinner component with sm/md/lg sizes plus a full-page LoadingPage variant."
+    },
+    {
+      "path": "src/components/ui/ErrorBoundary.tsx",
+      "summary": "Class-based error boundary with optional custom fallback and a reset handler."
+    },
+    {
+      "path": "src/components/ui/EmptyState.tsx",
+      "summary": "Empty state display with optional icon, title, description, and action (link or click handler)."
+    },
+    {
+      "path": "src/components/ui/Toast.tsx",
+      "summary": "ToastContainer renders active toasts from ToastContext with color-coded styles for success/error/info/warning."
+    },
+    {
+      "path": "src/components/navigation/navConfig.ts",
+      "summary": "Defines the NavItem interface and the five tab route configs with SVG icon paths."
+    },
+    {
+      "path": "src/components/navigation/BottomTabBar.tsx",
+      "summary": "Fixed bottom navigation bar that highlights the active tab using usePathname."
+    }
+  ],
+  "extras": "Verify: wrap app root with AuthProvider and ToastProvider; confirm BottomTabBar is rendered inside authenticated layout only. Follow-up: navigation guards (auth-required redirect logic) not visible in previewed files — confirm implementation is present in omitted files.",
+  "fallback_text": "PR #7 ships the app navigation shell and shared UI primitives. A bottom tab bar links to /dashboard, /log, /progress, /profile, and /settings with active-state highlighting. AuthContext wraps Supabase auth (signUp, signIn, signOut, resetPassword) and ToastContext manages a dismissible toast queue. Shared UI components added: LoadingSpinner (3 sizes), ErrorBoundary (class component with reset), EmptyState (optional icon/action), and ToastContainer (4 types). Supabase lib now exports browser, server (cookie), and admin clients. OpenAI client singleton also added. Required env vars: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY. No breaking changes. Animations, gestures, and offline indicators are deferred."
+}
