@@ -1,0 +1,18 @@
+[
+    {
+      "title": "AA-051 smoke root",
+      "description": "Root generated task for the AA-051 ingestion smoke test.",
+      "deliverable_type": "code",
+      "wave": 1,
+      "acceptance_criteria": ["Root generated task exists"],
+      "dependencies": []
+    },
+    {
+      "title": "AA-051 smoke child",
+      "description": "Child generated task for the AA-051 ingestion smoke test.",
+      "deliverable_type": "code",
+      "wave": 2,
+      "acceptance_criteria": ["Child task depends on root task"],
+      "dependencies": ["AA-051 smoke root"]
+    }
+  ]
